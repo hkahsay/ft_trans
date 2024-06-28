@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+
+  backend:
+    command: bash -c "python manage.py runserver 0.0.0.0:8000 & python manage.py runserver 0.0.0.0:8001" # TODO run django server
+    environment:
+      BUILD_TYPE: "DEV"
+
+    stdin_open: true
+    tty: true
+
+    ports:
+      - 8004:8000
+      - 8001:8001
+
+  frontend:
+    environment:
+      BUILD_TYPE: "DEV"
+
+    stdin_open: true
+    tty: true
+
+  postgres:
+    environment:
+      BUILD_TYPE: "DEV"
+
+    ports:
+      - 5432:5432
+
+  nginx:
+    environment:
+      BUILD_TYPE: "DEV"
+
+    stdin_open: true
+    tty: true
+
+    ports:
+      - 8080:443
+
+  adminer:
+    environment:
+      BUILD_TYPE: "DEV"
+
+    ports:
+      - 8081:8080

@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./_build/backend
+    depends_on:
+      postgres:
+          condition: service_healthy
+      
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./backend:/usr/src/app
+
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_PORT: ${DATABASE_PORT}
+
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+
+      AUTH_CLIENT_ID: ${AUTH_CLIENT_ID}
+      AUTH_CLIENT_SECRET: ${AUTH_CLIENT_SECRET}
+      REDIRECT_AUTH_URL: ${REDIRECT_AUTH_URL}
+
+    networks:
+      - back
+
+  frontend:
+    build: ./_build/frontend
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./frontend:/app
+
+    networks:
+      - front
+
+    working_dir: /app
+    
+  postgres:
+    image: postgres:15.3
+    expose:
+      - 5432
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - main_db:/var/lib/postgresql/data/
+
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+
+    networks:
+      - back
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./_build/nginx/Dockerfile
+
+    depends_on:
+      - backend
+      - adminer
+      - frontend
+    
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+    networks:
+      - back
+      - front
+
+
+  adminer:
+    image: adminer
+    
+    depends_on:
+      - postgres
+
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+    networks:
+      - back
+    
+networks:
+  back:
+  front:
+
+volumes:
+  main_db:
