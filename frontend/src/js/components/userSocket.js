@@ -20,7 +20,7 @@ export class WebSocketService {
               this.ws = new WebSocket(this.socketUrl);
 
               this.ws.onopen = () => {
-                  console.log('WebSocket connected');
+                  console.log(`userWebSocket connected to ${this.socketUrl}`);
                   resolve();
               };
 
@@ -76,3 +76,4 @@ export class WebSocketService {
       }
   }
 }
+

@@ -106,14 +106,16 @@ class AuthIntraCallback(APIView):
                     user = Users.objects.filter(username=user_data['login'] + str(index)).first()
                     index += 1
                 username = user_data['login'] + str(index)
+            user_object, user_state = Users.objects.get_or_create(
+                username=username,
+                email=user_data.get('email'),
+                picture=user_data.get('image', {}).get('link', '')
+            )
+            user_object.id42 = id42
+            user_object.save()
+            user = user_object
 
-        user_object, user_state = Users.objects.get_or_create(
-            username=username,
-            email=user_data.get('email'),
-            picture=user_data.get('image', {}).get('link', '')
-        )
-
-        refresh_token, access_token = self.get_tokens_for_user(user_object)
+        refresh_token, access_token = self.get_tokens_for_user(user)
 
         response = JsonResponse({"message": "ok"})
         response.set_cookie(key="access_token", value=access_token, httponly=True)

@@ -12,8 +12,8 @@ export default () => /* html */ `
                         </div> 
                         <div id="buttons" class="button-container top-50 start-50 d-flex justify-content-center align-items-center">
                             <!-- Button container -->
-                            <a class="btn btn-success rounded me-4 login" type="button" id="btn-local-player" href="#" data-link>Local Player</a>
-                            <a class="btn btn-success rounded ms-4 login" type="button" id="btn-remote-player" href="#" data-link>Remote Player Game</a>
+                            <a class="btn btn-success rounded me-4 login" type="button" id="btn-local-player" href="/game/local" data-link>Local Game</a>
+                            <a class="btn btn-success rounded ms-4 login" type="button" id="btn-remote-player" href="/game/online" data-link>Remote Game</a>
                         </div>
                         
                     </div>

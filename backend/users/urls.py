@@ -1,6 +1,8 @@
 # from django.conf.urls import url
 from django.urls import path, include
 from . import consumers
+
+
 from . import views
 
     
@@ -26,8 +28,16 @@ from .views import (
     AddFriendView,
     BlockUserView,
     BlockedUsersListView,
-    PublicPlayerDetailGamesSettings,
-    UpdateUserInfo
+    UpdateUserInfo,
+    CreateTournament,
+    StartTournament,
+    ListTournaments,
+    RemoteCreation,
+    PlayGame,
+    GetTournamentState,
+    
+
+    
 )
 
 urlpatterns = [
@@ -39,8 +49,13 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("chat/<str:room_name>/", views.room, name="room"),
     path('players/info/', PlayerDetailGamesSettings.as_view(), name="single-player-games"),
-    path('players/info/<str:requestedPlayer>', PublicPlayerDetailGamesSettings.as_view(), name="public_player_info"),
-    path('tournaments/creation/', ListAllUsers.as_view(), name='select-players-tournament'),
+    path('tournaments/creation/', CreateTournament.as_view(), name='create_tournament'),
+    path('remote/creation/', RemoteCreation.as_view(), name='remote_creation'),
+    path('tournaments/', ListTournaments.as_view(), name='list-tournaments'),
+    path('tournaments/<int:pk>/start/', StartTournament.as_view(), name='start_tournament'),
+    path('tournaments/play/', PlayGame.as_view(), name='play_game'),
+    path('api/tournaments/<int:pk>/state/', GetTournamentState.as_view(), name='get_tournament_state'),
+    path('getAllUsers/', ListAllUsers.as_view(), name='select-players-tournament'),
     path('me/status/', GetStatus.as_view(), name='auth_status'),
     path('me/data/', GetData.as_view(), name='auth_user'),
     path('profile/<str:username>', GetData.as_view(), name='user_profile'),
@@ -51,7 +66,7 @@ urlpatterns = [
     path('blocked/', BlockedUsersListView.as_view(), name='blocked-user'),
     path('update/', UpdateUserInfo.as_view(), name='update-user-info'),
     # path('users/update/', UpdateUserInfo.as_view(), name='update-user-info'),
-
+    # other paths...
 
 ]
 

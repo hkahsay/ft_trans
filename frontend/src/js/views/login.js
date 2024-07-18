@@ -1,4 +1,5 @@
 import "../components/loginForm.js";
+import { navigate } from "../main.js";
 
 export default () => /* html */ `
     <div class="alert alert-primary" role="alert">
@@ -16,5 +17,5 @@ export default () => /* html */ `
 // Listen for the custom event
 document.addEventListener('loginButtonClick', () => {
     // Navigate to the login view or trigger login functionality
-    window.location.href = "path/to/login";
+    navigate("path/to/login");
 });

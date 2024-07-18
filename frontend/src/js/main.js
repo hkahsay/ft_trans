@@ -1,9 +1,12 @@
 import home from "./views/home.js";
 import game from "./views/game.js";
+import onlineGame from "./views/onlineGame.js";
+import localGame from "./views/localGame.js";
 import chat from "./views/chat.js";
 import about from "./views/about.js";
 import profile from "./views/profile.js";
-import tournament from "./views/tournament.js";
+import tournamentShow from "./views/tournamentShow.js";
+import tournamentNew from "./views/tournamentNew.js";
 import login from "./views/login.js";
 import signup from "./views/signup.js";
 import logout from "./views/logout.js";
@@ -20,17 +23,44 @@ import { initializeProfile } from "./utils/profile.js";
 
 
 
+
+// navigation and update the URL without reloading the page.
+export function navigate(path) {
+  history.pushState(null, null, path);
+  router();
+}
+
+
 function routes(path) {
   const parts = path.substring(1).split('/');
   switch (parts[0]) {
     case "": return { title: "Home", render: home }
-    case "game": return { title: "Game", render: game }
+    case "game":
+      if (parts[1] ==="online") {
+        return { title: "OnlineGame", render: onlineGame }
+
+      }
+      else if (parts[1] ==="local") {
+        return { title: "LocalGame", render: localGame }
+
+      }
+      else {
+        return { title: "Game", render: game }
+
+      }
     case "chat": return { title: "Chat", render: chat }
     case "about": return { title: "About", render: about }
     case "profile":
       const username = parts[1]
       return { title: "Profile", render: () => profile(username), async: true }
-    case "tournament": return { title: "Tournament", render: tournament }
+    case "tournament": 
+      //if(parts.length > 1)
+      if(parts[1] !== undefined) {
+        const id = parts[1]
+        return { title: `Tournament ${id}`, render: () => tournamentShow(id), async: true }
+      } else {
+        return { title: "Create a new tournament", render: tournamentNew }
+      }
     case "auth": 
     if (parts[1] === "callback") {
       return { title: "Redirect", render: IntraCallback };
@@ -38,6 +68,7 @@ function routes(path) {
       return undefined;
     }
     case "login": return { title: "Login", render: login }
+    
     case "signup": return { title: "Signup", render: signup }
     case "logout": return { title: "Logout", render: logout }
     case "friends": return { title: "Friends", render: friends }
@@ -46,10 +77,14 @@ function routes(path) {
 }
 
 
-customElements.define('chat-area', ChatArea);
+
+if (!customElements.get('chat-area')) {
+  customElements.define('chat-area', ChatArea);
+}
+
 
 initializeSession().then();
-// initializeProfile().then();
+initializeProfile().then();
 
 function getCookie(name) {
   let cookieValue = null;
@@ -105,11 +140,11 @@ window.addEventListener("click", (e) => {
   if (clic_target.matches("[data-link]")) {
     e.preventDefault();
     if (clic_target.nodeName === "IMG") clic_target = clic_target.parentElement;
-    history.pushState("", "", clic_target.href);
-    router();
+    navigate(clic_target.href)
   }
 });
 
 // Update router
 window.addEventListener("popstate", router);
 window.addEventListener("DOMContentLoaded", router);
+

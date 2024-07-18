@@ -1,3 +1,5 @@
+import { navigate } from "../main";
+
 class LoginIntraCallback extends HTMLElement {
     constructor() {
         console.log("CAllback api")
@@ -26,7 +28,7 @@ class LoginIntraCallback extends HTMLElement {
                 }
 
                 localStorage.setItem('username', data.username);
-                window.location.href = "/";
+                navigate('/');
             }
         )
     }

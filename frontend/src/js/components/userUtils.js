@@ -173,25 +173,136 @@ export async function addFriend(username) {
     }
 }
 
-export async function sendUpdateRequest(updatedData) {
+export async function createTournament(tournamentData) {
+    try {
+      const csrfToken = getCookie('csrftoken');
+      const response = await fetch('https://localhost:8080/api/users/tournaments/creation/', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        credentials: 'include',
+        body: JSON.stringify(tournamentData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create tournament');
+      }
+
+      const data = await response.json();
+      console.log("data create tournament", data);
+      return data;
+    } catch (error) {
+      console.error('Error creating tournament:', error.message);
+      throw error;
+    }
+  }
+
+  export async function playGame(gameData) {
+    try {
+      const csrfToken = getCookie('csrftoken');
+      const response = await fetch('https://localhost:8080/api/users/tournaments/play/', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        credentials: 'include',
+        body: JSON.stringify(gameData)
+      });
+
+      if (!response.ok) {
+       
+        const errorData = await response.json();
+        console.error('Server response:', errorData);
+        throw new Error(`Failed to play game: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("Game played successfully:", data);
+      return data;
+    } catch (error) {
+      console.error('Error playing game:', error.message);
+      throw error;
+    }
+  }
+
+  
+
+  
+
+  export async function getTournamentInfo(tournamentData) {
+    try {
+      const response = await fetch('https://localhost:8080/api/users/tournaments/creation/', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(tournamentData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create tournament');
+      }
+
+      const data = await response.json();
+      console.log("data get tournament", data);
+      return data;
+    } catch (error) {
+      console.error('Error creating tournament:', error.message);
+      throw error;
+    }
+  }
+
+
+  export async function getTournamentlist(tournamentData) {
+    try {
+      const response = await fetch('https://localhost:8080/api/users/tournaments/', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(tournamentData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create tournament');
+      }
+
+      const data = await response.json();
+      console.log("data get tournament", data);
+      return data;
+    } catch (error) {
+      console.error('Error creating tournament:', error.message);
+      throw error;
+    }
+  }
+
+export async function sendUpdateRequest(formData) {
     try {
         const csrfToken = getCookie('csrftoken');
         const response = await fetch('https://localhost:8080/api/users/update/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Accept': 'application/json',
+                
                 'X-CSRFToken': csrfToken  // Include the CSRF token 
             },
             credentials: 'include',
-            body: JSON.stringify(updatedData)
+            body:formData
         });
 
         if (!response.ok) {
             throw new Error('Failed to update user info');
         }
 
-        return await response.json();
+        const data = await response.json();
+        return data;
     } catch (error) {
         console.error('Error updating user info:', error.message);
         throw error;
@@ -250,7 +361,7 @@ export async function getBlockedUsers() {
 
 export async function getUsers() {
     try {
-        const response = await fetch('https://localhost:8080/api/users/tournaments/creation/', {
+        const response = await fetch('https://localhost:8080/api/users/getAllUsers/', {
             method: 'GET',
             headers: {
                 'accept': 'application/json',
@@ -290,5 +401,6 @@ export async function updateFriendStatus() {
         throw error;
     }
 }
+
 
   

@@ -3,13 +3,21 @@ import { getUserData } from "../components/userUtils";
 export async function initializeProfile() {
     const data = await getUserData();
 
-    for (const key of Object.keys(data))
-        localStorage.setItem(key, data[key])
+    if (!data)
+        return;
 
-    if (data['id42'])
+    for (const key of Object.keys(data))
+    {
+        console.log(key, data[key]);
+        localStorage.setItem(key, `${data[key]}`)
+    }
+
+    if (Object.keys(data).includes('id42') && data["id42"])
     {
         const link = data['picture'].split('cdn.intra.42.fr/')[1];
         localStorage.setItem('picture', `https://cdn.intra.42.fr/${link}`);
-        console.log('id42', id42);
+    }
+    else {
+        localStorage.setItem("picture", `https://localhost:8080/api/${data['picture']}`)
     }
 }

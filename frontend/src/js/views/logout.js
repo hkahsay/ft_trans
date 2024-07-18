@@ -1,3 +1,5 @@
+import { navigate } from "../main";
+
 export default () => {
     fetch('https://localhost:8080/api/users/auth/logout/', {
         method: 'GET',
@@ -9,10 +11,12 @@ export default () => {
             localStorage.removeItem('picture');
             localStorage.removeItem('username');
             if (result.status >= 200 && result.status < 300) {
-                window.location.href = '/';
+                navigate('/');
             } else {
                 alert('Error logout : ' + result.body.error);
-                window.location.href = '/';
+                // window.location.href = '/';
+                navigate('/');
+
             }
         })
         .catch(error => {

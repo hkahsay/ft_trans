@@ -1,3 +1,5 @@
+import { navigate } from "../main";
+
 class SignupForm extends HTMLElement {
     constructor() {
         super();
@@ -51,7 +53,7 @@ class SignupForm extends HTMLElement {
         .then(result => {
             if (result.status >= 200 && result.status < 300) {
                 alert(result.body.message);
-                window.location.href = '/';
+                navigate('/');
             } else {
                 alert('Error Sign-up : ' + result.body.error);
             }

@@ -36,7 +36,7 @@ export class ChatArea extends HTMLElement {
                 const users = getAllFriends;
 
                 const allUsersData = await getUsers();
-                console.log('allUsersData',allUsersData);
+                console.log('allUsersData', allUsersData);
 
                 const otherUsers = users.filter(user => currentUser.id != user.id)
                 let selectedUserId = null;
@@ -99,9 +99,9 @@ export class ChatArea extends HTMLElement {
                     <!-- <button id="toggle-sidebar-menu" class="btn btn-primary d-md-none me-2">Menu</button> -->
                         <div class="profile-picture">
                             <!--add active user with profile picture-->
-                            <img class="me-3 shadow" src="https://localhost:8080/api${localStorage.getItem("picture")}" width="50" alt="profile_pic" />
+                            <img class="own-profile-picture me-3 shadow" src="${localStorage.getItem("picture")}" width="50" alt="profile_pic" />
                         </div>
-                        <h3 id="profileUserName" class="text-white me-3">${currentUser.username}</h3>
+                        <h3 id="profileUserName" class="own-profile-username text-white me-3">${currentUser.username}</h3>
                     </header>
                     <!-- Chat Area -->
                     <div>
@@ -126,7 +126,6 @@ export class ChatArea extends HTMLElement {
             </div>
         `;
         this.addMessageInputEventListener();
-        // this.addSidebarToggleEventListener();
     }
     
 
@@ -237,28 +236,6 @@ export class ChatArea extends HTMLElement {
         });
     }
 
-    //meriaquerryeventlistener
-    addSidebarToggleEventListener() {
-        const toggleSidebarButton = this.querySelector('#toggle-sidebar');
-        const toggleSidebarMenuButton = this.querySelector('#toggle-sidebar-menu');
-        const sidebar = this.querySelector('#sidebar');
-    
-        toggleSidebarButton.addEventListener('click', () => {
-            sidebar.classList.toggle('d-none');
-        });
-    
-        toggleSidebarMenuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('d-none');
-        });
-    
-        const userLinks = this.querySelectorAll('#friendList a');
-        userLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                sidebar.classList.add('d-none');
-            });
-        });
-    }
-
 
     renderUserList() { 
         const { blocked_users } = this._state.blockedList;
@@ -343,7 +320,7 @@ export class ChatArea extends HTMLElement {
                     <div class="shadow-lg message-card sender active me-3 mb-3  ${messageCardClass}">
                         <div class="message-sender col-auto">
                             <div class="profile-picture">
-                                <img class="me-3 shadow align-content-center" src="https://localhost:8080/api${localStorage.getItem("picture")}" width="50" alt="profile picture" />
+                                <img class="me-3 shadow align-content-center" src="${localStorage.getItem("picture")}" width="50" alt="profile picture" />
                             </div>
                         </div>
                         <div class="message  message-content ms-3 mt-3">
@@ -359,3 +336,5 @@ export class ChatArea extends HTMLElement {
         
     }
 }
+
+// customElements.define('chat-area', ChatArea);

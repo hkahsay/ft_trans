@@ -373,3 +373,42 @@ body {
     cursor: pointer;
   }
   
+
+  /* ------------tournament--------- */
+
+  small {
+    color: #666;
+  }
+  select[multiple] {
+    height: 10rem;
+    font-size: 1rem;
+    padding: 0.25rem;
+  }
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .game {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0.1);
+    margin: 0.2rem;
+  }
+  .subgames {
+    display: flex;
+    justify-content: space-around;
+  }
+  .subgames .game {
+    width: 50%;
+  }
+  .leaf,
+  .to-be-played,
+  .winner {
+    padding: 0.5rem;
+  }
+  .winner::after {
+    content: " 👑";
+  }

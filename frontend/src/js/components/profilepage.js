@@ -105,7 +105,7 @@ getmodal(){
         </div>
         <div>
           <label for="password" class="form-label">New Password</label>
-          <input type="password" class="form-control" if="password" name="password">
+          <input type="password" class="form-control" id="password" name="password">
         </div>
         <button type="submit" class="btn btn-primary">Update</button>
       </form>
@@ -124,9 +124,9 @@ getmodal(){
         <div id="sidebar" class="d-flex flex-column p-3">
           <header id="chat-header" class="d-flex align-items-center mb-4">
             <div class="profile-picture me-3">
-              <img class="shadow" src="https://localhost:8080/api${localStorage.getItem("picture")}" width="50" alt="profile_pic" />
+              <img class="shadow own-profile-picture" src="${localStorage.getItem("picture")}" width="50" alt="profile_pic" />
             </div>
-            <h3 id="profileUserName" class="text-white me-3">${username}</h3>
+            <h3 id="profileUserName" class=" own-profile-username text-white me-3">${username}</h3>
             <svg id="editIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
           </header>
           <div id="userStats">
@@ -190,24 +190,17 @@ getmodal(){
 async updateUserInfo(event) {
   event.preventDefault();
   const formData = new FormData(event.target);
-  const updatedData = {
-    username: formData.get('username'),
-    picture: formData.get('picture'),
-    // password: formData.get('password')
-  };
+
   try {
     // Send updated data to the backend
-    const data = await sendUpdateRequest(updatedData);
-
+    const data = await sendUpdateRequest(formData);
     // Update the local state and UI with the new data
     const setdata = await getUserData();
+
     setdata.currentuser = data;
-    console.log('setdata.currentuser', setdata);
     localStorage.setItem("picture", data.picture);
     localStorage.setItem("username", data.username);
-    console.log("do i realy come here", data.picture);
-    // localStorage.setItem("password", data.password);
-
+    localStorage.setItem("password", data.password);
 
     this.render();
     document.querySelector('#updateModal').style.display = 'none';
@@ -225,8 +218,7 @@ async updateUserInfo(event) {
     updateModal.style.display = 'block';
     const userProfile = this._state.userProfile;
     document.querySelector('#updateForm #username').value = userProfile.username;
-    document.querySelector('#updateForm #password').value = userProfile.password;
-    // document.querySelector('.profile-picture').src = `${userProfile.picture}?t=${new Date().getTime()}`;
+    document.querySelector('.profile-picture').src = `${userProfile.picture}`;
 
   });
 

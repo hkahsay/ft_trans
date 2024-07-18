@@ -2,7 +2,7 @@ import json
 import jwt
 import base64
 from django.conf import settings
-from .models import Users
+from users.models import Users
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
@@ -82,6 +82,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.handle_message(text_data_json)
             elif action == 'status_query':
                 await self.handle_status_query(text_data_json)
+            elif action == 'tournament_notification':
+                await self.handle_tournament_notification(text_data_json)
             else:
                 print(f"Unhandled action: {action}")
         except json.JSONDecodeError as e:
@@ -138,3 +140,20 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'statuses': statuses
                 }
             }))
+
+
+    async def handle_tournament_notification(self, text_data_json):
+        message = text_data_json['message']
+        player_ids = text_data_json['players_ids']
+
+        for player_id in player_ids:
+            if str(player_id) in self.connected_users:
+                player_connection = self.connected_users[str(player_id)]
+                await player_connection.send(json.dumps({
+                    "action": "tournament_notification",
+                    "data":{
+                        'message': message,
+                    }
+                }))            
+
+  

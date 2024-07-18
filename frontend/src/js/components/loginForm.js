@@ -1,3 +1,4 @@
+import { navigate } from "../main";
 
 class LoginForm extends HTMLElement {
     constructor() {
@@ -47,7 +48,7 @@ class LoginForm extends HTMLElement {
                 localStorage.setItem('picture', result.data.picture);
                
                 alert("login successful, welcome " + result.data.username + "." );
-                window.location.href = '/';
+                navigate('/');
             } else {
                 alert('Error Login : ' + result.data.error);
 
