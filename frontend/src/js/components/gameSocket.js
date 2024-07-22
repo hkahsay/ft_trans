@@ -29,8 +29,8 @@ export class gameSocket {
                   this.processMessage(e.data);
               };
 
-              this.ws.onclose = () => {
-                  console.log(`gameSocket disconnected from ${this.socketUrl}`);
+              this.ws.onclose = (e) => {
+                  console.log(`gameSocket disconnected from ${this.socketUrl} with code ${e.code}`);
               };
           } else {
               resolve();

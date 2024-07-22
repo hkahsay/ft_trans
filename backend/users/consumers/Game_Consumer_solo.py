@@ -1,89 +1,24 @@
 import json
 import asyncio
-import random, time, threading
+import random, time
 from . import pong_engine
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
-from users.models import Games, Users, Settings
-from asgiref.sync import sync_to_async
 
-class GameConsumer(AsyncWebsocketConsumer):
-	room_id = 0
-	player_queue = []
-	active_rooms = {}
-	active_players = set()
-	queue_lock = threading.Lock()
+
+
+class GameConsumerSolo(AsyncWebsocketConsumer):
 
 	async def connect(self):
-		self.user_id = self.scope["user"].id
+		self.reset_game()
 		await self.accept()
 		print("game websocket connected")
 
-		self.reset_game()
-		self.player_role = None
-		self.room_group_name = None
-
-		with GameConsumer.queue_lock:
-			if len(GameConsumer.player_queue) == 0 or (self.user_id in self.active_players):
-				GameConsumer.active_players.add(self.user_id)
-				GameConsumer.player_queue.append(self)
-				await self.send(text_data=json.dumps({"action":"waiting_for_players"}))
-				print("active_player =", self.active_players)
-				print("player queue  =", self.player_queue)
-			else:
-				GameConsumer.active_players.add(self.user_id)
-				opponent = GameConsumer.player_queue.pop(0)
-				room_name = f"game_room_{GameConsumer.room_id}"
-				GameConsumer.room_id += 1
-				GameConsumer.active_rooms[room_name] = (self, opponent)
-
-				self.room_group_name = room_name
-				opponent.room_group_name = room_name
-				self.player_role = "rightPlayer"
-				opponent.player_role = "leftPlayer"
-
-				await self.channel_layer.group_add(room_name, self.channel_name)
-				await self.channel_layer.group_add(room_name, opponent.channel_name)
-
-				settings = await sync_to_async(Settings.objects.create)()
-				#Opponent is the leftPlayer
-				opponent.game = await sync_to_async(Games.objects.create)(
-					player1_id = opponent.user_id,
-					player2_id = self.user_id,
-					settings = settings
-				)
-				self.game = opponent.game
-
-				await self.channel_layer.group_send(
-					room_name,
-					{"type": "start_game_event"}
-				)
+		self.player_role = "solo"
+		asyncio.create_task(self.game_start())
 
 	async def disconnect(self, close_code):
-		print("game websocket disconnected with code :", close_code)
-		self.data["events"]["fin"] = 1
-		if hasattr(self, "room_group_name") and self.room_group_name in GameConsumer.active_rooms:
-			await self.channel_layer.group_send(
-				self.room_group_name, {
-					"type": "opponent_disconnected",
-					"data": {"info": "Your opponent disconnected from the game"}
-					})
-			await self.channel_layer.group_discard(
-				self.room_group_name,
-				self.channel_name
-			)
-			GameConsumer.active_rooms.pop(self.room_group_name, None)
-		else:
-			with GameConsumer.queue_lock:
-				if self in GameConsumer.player_queue:
-					GameConsumer.player_queue.remove(self)
-		GameConsumer.active_players.discard(self.user_id)
-
-		if hasattr(self, 'game') and self.player_role == "leftPlayer":
-			if self.left_score == self.max_score or self.right_score == self.max_score:
-				self.game.player1_score = self.left_score
-				self.game.player2_score = self.right_score
-				await sync_to_async(self.game.save)()
+		print("game websocket disconnected")
 
 	async def receive(self, text_data):
 		text_data_json = json.loads(text_data)
@@ -91,18 +26,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 		key_data = text_data_json.get("key", {})
 		end = text_data_json.get("events", {}).get("fin", 0)
 
-		if self.player_role == "leftPlayer" and origin == "leftPlayer":
+		if origin == "leftPlayer":
 			self.handle_player_input(self.player_l, key_data)
-		elif self.player_role == "rightPlayer" and origin == "rightPlayer":
-			await self.channel_layer.group_send(
-				self.room_group_name, {
-					"type": "right_player_input",
-					"data": {
-						"origin": origin,
-						"key_data": key_data
-					}
-				}
-			)
+		if origin == "rightPlayer":
+			self.handle_player_input(self.player_r, key_data)
 		if (end == 1):
 			self.data["events"]["fin"] = 1
 		else:
@@ -126,15 +53,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 			elif key_data["down"] == 0 and player.speedy >= 0:
 				player.speedy -= player.maxspeedy
 
-	async def start_game_event(self, event):
-		if self.player_role == "leftPlayer":
-			asyncio.create_task(self.game_start())
-
-		await self.send(text_data=json.dumps({"type": "start_game", "role": self.player_role}))
-		for player in GameConsumer.active_rooms[self.room_group_name]:
-			if player != self:
-				await player.send(text_data=json.dumps({"type": "start_game", "role": player.player_role}))
-	
 	async def game_start(self):
 		elapsed_time = 0
 		print("game starting :")
@@ -144,16 +62,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 			self.ball_animation(self.ball)
 			self.player_animation(self.player_l, self.player_r)
 
-			await self.channel_layer.group_send(
-				self.room_group_name, {
-					"type": "game_state_update",
-					"data": {
-						"action":"input",
-						"ball":{"x":self.ball.x, "y":self.ball.y},
-						"leftPaddle": {"x":self.player_l.x, "y":self.player_l.y},
-						"rightPaddle": {"x":self.player_r.x, "y":self.player_r.y},
-						"score": {"left": self.left_score, "right": self.right_score}
-					}})
+			await self.send(text_data=json.dumps({
+				"action":"input",
+				"ball":{"x":self.ball.x, "y":self.ball.y},
+				"leftPaddle": {"x":self.player_l.x, "y":self.player_l.y},
+				"rightPaddle": {"x":self.player_r.x, "y":self.player_r.y},
+				"score": {"left": self.left_score, "right": self.right_score}
+			}))
 			elapsed_time = ((time.monotonic_ns() - myclock) / 1000000000)
 			if (elapsed_time < (1 / self.fps)):
 				await asyncio.sleep((1 / self.fps) - elapsed_time)
@@ -164,11 +79,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 	async def game_state_update(self, event):
 		data = event["data"]
 		await self.send(text_data=json.dumps(data))
-
-	async def opponent_disconnected(self, event):
-		await self.send(text_data=json.dumps({"action":"opponent_disconnected"}))
-		await self.close()
-		print("Game stopped :", event["data"]["info"])
 
 	def	check_col_rect(self, rect1, rect2):
 		if (rect1.right < rect2.left) or (rect1.left > rect2.right):

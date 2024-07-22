@@ -100,10 +100,10 @@ class Games(models.Model):
 
     # round = models.IntegerField(default=1) #tournament rounds
 class Settings(models.Model):
-    background_color = models.CharField(max_length=30)
+    background_color = models.CharField(max_length=30, default="default")
     paddle_size = models.IntegerField(default=100)
     paddle_speed = models.IntegerField(default=100)
-    paddle_color = models.CharField(max_length=30)
+    paddle_color = models.CharField(max_length=30, default="default")
     ball_speed = models.IntegerField(default=100)
 
 class UserGames(models.Model):

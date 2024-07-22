@@ -1,5 +1,6 @@
 import { getUserData, getUsers, getGameStats, sendUpdateRequest, getusergameinfo } from "./userUtils";
 
+
 class PPelement extends HTMLElement {
   constructor() {
     super();
@@ -34,13 +35,14 @@ class PPelement extends HTMLElement {
         });
         await this.handleGameData(foundUser.username);
       }
-      await this.render();
+      await this.render(); 
     }catch(error) {
       console.error('Error in connectedCallback:', error);
     }
   }
 
  
+  
   async handleGameData(username) {
     try {
         const gameData = await getGameStats();
@@ -49,8 +51,6 @@ class PPelement extends HTMLElement {
         if (!gamelists || gamelists.length === 0) {
             throw new Error('No game data fetched!');
         }
-        console.log('gamelists from handgdata', gamelists);
-
         let wins = 0;
         let losses = 0;
         const scores = [];
@@ -183,6 +183,7 @@ getmodal(){
     `;
     this.innerHTML = generatedHTML;  
     await this.handleGameStats();
+
     this.updateFormAddEventListener();
   }
   
@@ -202,12 +203,16 @@ async updateUserInfo(event) {
     localStorage.setItem("username", data.username);
     localStorage.setItem("password", data.password);
 
-    this.render();
+    this.render(); 
     document.querySelector('#updateModal').style.display = 'none';
   } catch (error) {
     console.error('Failed to update user info', error);
+    // Display an error message to the user
+    alert(error.message);
   }
 }
+
+
 // Add event listener for the edit icon and form submission
   updateFormAddEventListener() {
   const editIcon = document.querySelector('#editIcon');
@@ -335,7 +340,6 @@ async updateUserInfo(event) {
       const acHistory = document.querySelector("#acHistory");
       acHistory.innerHTML = ''; //clear previous content if any
       for(const[index, game] of data.entries()){
-        console.log("dataentry", data.entries());
         let st = new Date(game.start_time);
         let et = new Date(game.end_time);
         let tt = Math.round((et - st) / 1000);

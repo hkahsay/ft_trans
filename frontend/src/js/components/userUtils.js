@@ -283,6 +283,21 @@ export async function createTournament(tournamentData) {
     }
   }
 
+
+  export async function fetchTournamentDetails(id) {
+    const response = await fetch(`https://localhost:8080/api/users/tournaments/${id}/`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch tournament details');
+    }
+    return await response.json();
+}
+
 export async function sendUpdateRequest(formData) {
     try {
         const csrfToken = getCookie('csrftoken');
@@ -298,8 +313,10 @@ export async function sendUpdateRequest(formData) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to update user info');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update user info');
         }
+        
 
         const data = await response.json();
         return data;

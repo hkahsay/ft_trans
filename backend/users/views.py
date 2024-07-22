@@ -30,6 +30,10 @@ from uuid import UUID
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
+from django.db import transaction
+from django.db.models import F
+from django.db import IntegrityError
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,19 +67,21 @@ def fill_winners(games, tree):
         
         if game:
             winner = left_winner if game.player1_score > game.player2_score else right_winner
-            print(f"Game winner: {winner['username']}")  # Add this line for debugging
+            print(f"Game winner: {winner['username']}") 
         else:
             winner = None
-            print("No game found for these players")  # Add this line for debugging
+            print("No game found for these players") 
     else:
         winner = None
-        print("Not enough winners to determine next winner")  # Add this line for debugging
+        print("Not enough winners to determine next winner") 
     
     return {
         'left': left,
         'right': right,
         'winner': winner
     }
+
+
 
 def convert_uuid_to_str(obj):
     if isinstance(obj, UUID):
@@ -159,7 +165,7 @@ def notify_next_match(tournament):
     tree = fill_winners(games, generate_tournament_tree(list(tournament.tournament_players.all())))
     next_games = find_next_match(tree, games)
     channel_layer = get_channel_layer()
-    
+   
     for game in next_games:
         player1 = game['player1']
         player2 = game['player2']
@@ -266,7 +272,7 @@ class CreateTournament(APIView):
             
             tournament.refresh_from_db()  # Refresh to include related objects
             serializer = TournamentSerializer(tournament)
-            # notify_next_match()
+           
             # notify_next_match(tournament)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -285,11 +291,23 @@ class ListTournaments(APIView):
         serializer = TournamentSerializer(tournaments, many=True)
         return Response(serializer.data)
 
-
+class FetchTournamentDetails(APIView):
+    def get(self, request, tournament_id):
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+        serializer = TournamentDetailSerializer(tournament)
+        return Response(serializer.data)
 
 class StartTournament(APIView):
     def post(self, request, pk):
         tournament = get_object_or_404(Tournament, pk=pk)
+        # if tournament.is_active:
+        #     return Response({"error": "Tournament is already active"}, status=status.HTTP_400_BAD_REQUEST)
+        # optimistic locking on the backend to prevent race conditions:
+        # with transaction.atomic():
+        #     tournament = Tournament.objects.select_for_update().get(pk=pk)
+            
+        #     if tournament.is_active:
+        #         return Response({"error": "Tournament is already active"}, status=status.HTTP_400_BAD_REQUEST)
         games = Games.objects.filter(tournament=tournament)
 
         # Get all players in the tournament
@@ -388,35 +406,6 @@ class PlayGame(APIView):
   
 
 
-class GetTournamentState(APIView):
-    def get(self, request, pk):
-        tournament = get_object_or_404(Tournament, pk=pk)
-        games = Games.objects.filter(tournament=tournament)
-
-        if not tournament.is_active:
-            return Response({"error": "Tournament has not been started"}, status=status.HTTP_400_BAD_REQUEST)
-
-        updated_tree = fill_winners(games, tournament.tree)
-        next_games = find_next_match(updated_tree, games)
-
-        return JsonResponse({
-            'id': tournament.id,
-            'name': tournament.name,
-            'creator': tournament.creator.username,
-            'is_active': tournament.is_active,
-            'winner': tournament.winner.username if tournament.winner else None,
-            'players': [{'id': tp.player.id, 'username': tp.player.username} for tp in tournament.tournament_players.all()],
-            'games': [
-                {'id': game.id, 'player1': game.player1.username, 'player2': game.player2.username,
-                 'player1_score': game.player1_score, 'player2_score': game.player2_score}
-                for game in games
-            ],
-            'tree': updated_tree,
-            'next_games': next_games
-        })
-
-
-
 class FriendListView(APIView):
     def get(self, request):
         user = request.user
@@ -501,7 +490,13 @@ class UpdateUserInfo(APIView):
         if 'password' in data and data['password']:
             user.password = make_password(data['password'])
 
+        try:
+            user.save()
+            serializer = UsersSerializer(user)
+            return JsonResponse(serializer.data)
+        except IntegrityError as e:
+            if 'unique constraint' in str(e):
+                return JsonResponse({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"error": "An error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        user.save()
-        serializer = UsersSerializer(user)
-        return JsonResponse(serializer.data)
+

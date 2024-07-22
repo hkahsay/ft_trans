@@ -138,34 +138,7 @@ class tournamentNew extends HTMLElement {
       });
 
     }
-
-    renderCreatedTournament(tournament) {
-      const tournamentHistory = document.querySelector("#acTournamentHistory");
-      // const playersList = tournament.players.map(player => player.id).join(', ');
-      const playersListHtml = tournament.players.map(player => `
-      <li class="stats">${player.player_username} (${player.eliminated ? 'Eliminated' : 'Active'})</li>
-      `).join('');
-      const newTournamentHtml = /* html */ `
-        <div class="accordion-item">
-          <h2 class="accordion-header" id="heading-${tournament.id}">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#chapter-${tournament.id}" aria-expanded="true" aria-controls="chapter-${tournament.id}">
-              Tournament ${tournament.name} - ${new Date(tournament.created_at).toLocaleString()}
-            </button>
-          </h2>
-          <div id="chapter-${tournament.id}" class="accordion-collapse collapse show" aria-labelledby="heading-${tournament.id}" data-bs-parent="#chapters">
-            <div class="accordion-body">
-              <p>Creator: ${tournament.creator.username}</p>
-              <ul>
-                ${playersListHtml}
-              </ul>
-              <div id="next-match"></div>
-            </div>
-          </div>
-        </div>
-      `;
-      tournamentHistory.insertAdjacentHTML('afterbegin', newTournamentHtml);
-    }
-    
+ 
 
   }
 

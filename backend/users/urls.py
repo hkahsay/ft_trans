@@ -34,7 +34,7 @@ from .views import (
     ListTournaments,
     RemoteCreation,
     PlayGame,
-    GetTournamentState,
+    FetchTournamentDetails,
     
 
     
@@ -52,9 +52,9 @@ urlpatterns = [
     path('tournaments/creation/', CreateTournament.as_view(), name='create_tournament'),
     path('remote/creation/', RemoteCreation.as_view(), name='remote_creation'),
     path('tournaments/', ListTournaments.as_view(), name='list-tournaments'),
+    path('tournaments/<int:pk>/', FetchTournamentDetails.as_view(), name='tournament-detail'),
     path('tournaments/<int:pk>/start/', StartTournament.as_view(), name='start_tournament'),
     path('tournaments/play/', PlayGame.as_view(), name='play_game'),
-    path('api/tournaments/<int:pk>/state/', GetTournamentState.as_view(), name='get_tournament_state'),
     path('getAllUsers/', ListAllUsers.as_view(), name='select-players-tournament'),
     path('me/status/', GetStatus.as_view(), name='auth_status'),
     path('me/data/', GetData.as_view(), name='auth_user'),

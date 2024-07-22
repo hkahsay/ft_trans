@@ -5,42 +5,58 @@ import { navigate } from "../main";
 class tournamentShow extends HTMLElement {
     constructor() {
         super();
-        this._state = {
-            tournamentId: undefined,
-            tournament: undefined
-        };
+       
+        this.handleTournamentNotification = this.handleTournamentNotification.bind(this);
+        this.innerHTML = /*html*/`
+        <div class="constainer my-5">
+          <div id="notificationArea" class="alert alert-info" style="display: none;"></div>
+            <section id="TournamentHistory">
+              <div class="container-md">
+                <div class="text-center">
+                  <h3 id="history-text">Tournament History</h3> 
+                </div>
+                <div class="accordion my-3" id="chapters">
+                  <section id="acTournamentHistory">
+                  </section>
+                </div>
+              </div>
+            </section>
+        </div>`;
         WebSocketService.getInstance().connect().then(() => {
             console.log("WebSocket connection established.");
         })
         WebSocketService.getInstance().addCallback('tournament_notification', this.handleTournamentNotification.bind(this)); // Corrected argument order
-      
-        this.innerHTML = /*html*/`
-        <div class="constainer my-5">
-            <section id="TournamentHistory">
-                <div class="container-md">
-                    <div class="text-center">
-                         <h3 id="history-text">Tournament History</h3> 
-                    </div>
-                    <div class="accordion my-3" id="chapters">
-                        <section id="acTournamentHistory">
-                        </section>
-                    </div>
-                </div>
-            </section>
-        </div>`;
-    }
-
-    async handleTournamentNotification(data){
-        alert(`Tournament Notification: ${data.data.message}`);
-            // Update the UI
-        const notificationElement = document.createElement('div');
-        notificationElement.textContent = data.message;
-        notificationElement.className = 'notification';
-        document.querySelector('#acTournamentHistory').appendChild(notificationElement);
+        
       }
 
-   
+      async handleTournamentNotification(data) {
+        console.log("Tournament notification received:", data);
+        
+        // Display the notification in the notification area
+        const notificationArea = this.querySelector('#notificationArea');
+        notificationArea.textContent = data.message;
+        notificationArea.style.display = 'block';
+
+        setTimeout(() => {
+            notificationArea.style.display = 'none';
+        }, 5000);
+
+        // Add the notification to the tournament history
+        this.addNotificationToHistory(data.message);
+    }
+
+    addNotificationToHistory(message) {
+        const historySection = this.querySelector('#acTournamentHistory');
+        const notificationElement = document.createElement('div');
+        notificationElement.className = 'alert alert-info mt-2';
+        notificationElement.textContent = message;
+        historySection.prepend(notificationElement); // Add to the top of the list
+    }
+
+
+      
     async connectedCallback() {
+      console.log("conectedcallback");
         try{
             const tournamentId = this.getAttribute('tournament-id');
 
@@ -95,12 +111,15 @@ class tournamentShow extends HTMLElement {
                 <ul>
                   ${playersListHtml}
                 </ul>
-               <div id="next-match"></div>
+               <div id="next-match">
+
+               </div>
               </div>
             </div>
           </div>
         `;
-        tournamentHistory.insertAdjacentHTML('afterbegin', newTournamentHtml);
+        tournamentHistory.innerHTML = newTournamentHtml;
+        // tournamentHistory.insertAdjacentHTML('afterbegin', newTournamentHtml);
     }
 
     async startTournament(tournamentId) {
@@ -117,7 +136,6 @@ class tournamentShow extends HTMLElement {
           }
           const match = await response.json();
           console.log("match-data", match);
-          // this.renderNextMatch(match);
           return match;
   
         } catch (error) {
@@ -125,22 +143,6 @@ class tournamentShow extends HTMLElement {
         }
       }
       
-
-      
-    async getTournamentState(id) {
-      const response = await fetch(`https://localhost:8080/api/users/tournaments/${id}/state/`, {
-          headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': getCookie('csrftoken'),
-          }
-      });
-      if (!response.ok) {
-          throw new Error('Failed to fetch tournament state');
-      }
-      return await response.json();
-  }
-    
-
 
     async renderTournamentDetails(id) {
       const data = await this.startTournament(id);
@@ -166,6 +168,9 @@ class tournamentShow extends HTMLElement {
           `;
         }
       }
+
+
+      
       
       const tournamentDetailsHtml = `
         <h1>${data.name}</h1>
@@ -178,30 +183,33 @@ class tournamentShow extends HTMLElement {
         <div class="tournament-tree">
           ${renderTournamentTree(data.tree)}
         </div>
-        <h2>Next games</h2>
-        <ul>
-          ${data.next_games && data.next_games.length > 0 ? 
-             data.next_games.map(
-              (g) => `
-              <li>
-                <span>${g.player1.username} vs ${g.player2.username}</span>
-                <form class="play-game-form">
-                  <input type="hidden" name="tournament_id" id="tournament_id" value="${id}">
-                  <input type="hidden" name="player1" id="player1" value="${g.player1.id}">
-                  <input type="hidden" name="player2" id="player2" value="${g.player2.id}">
-                  <label for="player1_score">Score ${g.player1.username}:</label>
-                  <input type="number" name="player1_score" id="player1_score" placeholder="Score ${g.player1.username}">
-                  <label for="player2_score">Score ${g.player2.username}:</label>
-                  <input type="number" name="player2_score" id="player2_score" placeholder="Score ${g.player2.username}">
-                  <button type="submit">Save game</button>
-                </form>
-              </li>
-            `
-            ).join("")
-            
-            : '<li>No upcoming games</li>'}
-            ${console.log("Next games:", data.next_games)}
-        </ul>
+        <p>${data.is_active ? 'Active' : 'Finished'}</p>
+        ${data.winner ? `<h2>Winner</h2><p class="winner">${data.winner}</p>` : '<p>No winner yet</p>'}
+        ${data.is_active ? `
+          <h2>Next games</h2>
+          <ul>
+              
+              ${data.next_games && data.next_games.length > 0 ? 
+                data.next_games.map(
+                  (g) => `
+                  <li>
+                    <span>${g.player1.username} vs ${g.player2.username}</span>
+                    <form class="play-game-form">
+                      <input type="hidden" name="tournament_id" id="tournament_id" value="${id}">
+                      <input type="hidden" name="player1" id="player1" value="${g.player1.id}">
+                      <input type="hidden" name="player2" id="player2" value="${g.player2.id}">
+                      <label for="player1_score">Score ${g.player1.username}:</label>
+                      <input type="number" name="player1_score" id="player1_score" placeholder="Score ${g.player1.username}">
+                      <label for="player2_score">Score ${g.player2.username}:</label>
+                      <input type="number" name="player2_score" id="player2_score" placeholder="Score ${g.player2.username}">
+                      <button type="submit">Save game</button>
+                    </form>
+                  </li>
+                `
+                ).join("")  
+                : '<li>No upcoming games</li>'}
+          </ul>
+        ` : '<p> The tournament has finished, no more games scheduled.</p>'}
       `;
       
       // Update the DOM with the new tournament details
